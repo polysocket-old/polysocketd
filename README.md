@@ -33,6 +33,7 @@ This pushes data into you established socket. This is a call independent of your
 
 **params**
 
+```javascript
 {
   socket : (String) your established socket id
   events : [
@@ -46,6 +47,7 @@ This pushes data into you established socket. This is a call independent of your
     }
   ]
 }
+```
 
 **reponse**
 `400` bad request means you are missing parameters or they are poorly formatted
