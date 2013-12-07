@@ -60,8 +60,11 @@ This pushes data into you established socket. This is a call independent of your
 ```
 
 **reponse**
+
 `400` bad request means you are missing parameters or they are poorly formatted
+
 `403` unauthorized means your socket isn't valid
+
 `201` means we have accepted your data and pushed it along your socket
 
 There is no body to the response. Just a 201 code. Once you receive this code, you are free to POST again. You shouldn't POST multiple times before receiving a response to ensure that order is maintained.
@@ -75,7 +78,9 @@ After you receive this response, you are expected to make a new call so you can 
 **response**
 
 `400` bad request means bad parameters
+
 `403` unauthorized means your socket id could not be found
+
 `200` means the server has a valid response for you to process
 
 ```javascript
