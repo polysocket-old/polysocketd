@@ -27,6 +27,33 @@ The response also gives you a `relay` which is a hostname that you should contin
 * `socket` (String) your socket id
 * `relay` (String) the hostname of the relay you should talk to
 
+### `POST ://#{relay}/polysocket/send`
+
+This pushes data into you established socket. This is a call independent of your jsonp long polling and xhr-streaming. This is your way to send data, the other calls are how you receive data. Combined to make full-duplex!
+
+**params**
+
+{
+  socket : (String) your established socket id
+  events : [
+    {
+      type : 'string' // string type of message send
+      data : '1234'
+    },
+    {
+      type : 'binary'
+      data : 'ABCA' // base64 binary
+    }
+  ]
+}
+
+**reponse**
+`400` bad request means you are missing parameters or they are poorly formatted
+`403` unauthorized means your socket isn't valid
+`201` means we have accepted your data and pushed it along your socket
+
+There is no body to the response. Just a 201 code. Once you receive this code, you are free to POST again. You shouldn't POST multiple times before receiving a response to ensure that order is maintained.
+
 ### `GET ://#{relay}/polysocket/jsonp?socket=#{socket}&timeout=#{timeout_ms}&callback=#{callback_fn}`
 
 This starts a jsonp long-polling call for receiving data over your socket. This will timeout and return with no data after timeout elapses and no data was sent. This gives the browser control over the timeout. It should be set to a time less than the browser deeming the connection as "timed out" (less than 30 seconds).
