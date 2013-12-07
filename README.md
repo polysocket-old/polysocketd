@@ -31,6 +31,8 @@ The response also gives you a `relay` which is a hostname that you should contin
 
 This starts a jsonp long-polling call for receiving data over your socket. This will timeout and return with no data after timeout elapses and no data was sent. This gives the browser control over the timeout. It should be set to a time less than the browser deeming the connection as "timed out" (less than 30 seconds).
 
+After you receive this response, you are expected to make a new call so you can get the next bit of data coming your way.
+
 **response**
 
 `400` bad request means bad parameters
