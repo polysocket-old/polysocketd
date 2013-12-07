@@ -16,16 +16,26 @@ The response also gives you a `relay` which is a hostname that you should contin
 
 **params**
 
-* `target` (String) valid WebSocket URL, who you're connecting to through the relay
+```javascript
+{
+  target : (String) valid WebSocket URL, who you're connecting to through the relay
+}
+```
 
 **response**
+
 `400` bad request means we couldn't attemp to fulfil the request because you didn't provide necessary parameters
+
 `200` means server has handled your request without issue, but your response may still be an error
 
-* `ok` (Boolean) true when no error
-* `error` (String, optional) present when ok is false
-* `socket` (String) your socket id
-* `relay` (String) the hostname of the relay you should talk to
+```javascript
+{
+  ok     : (Boolean) true when no error
+  error  : (String, optional) present when not ok
+  socket : (String) your socket id
+  relay  : (String) hostname of the relay you should talk to
+}
+```
 
 ### `POST ://#{relay}/polysocket/send`
 
