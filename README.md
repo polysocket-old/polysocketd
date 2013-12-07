@@ -19,6 +19,7 @@ The response also gives you a `relay` which is a hostname that you should contin
 ```javascript
 {
   target : (String) valid WebSocket URL, who you're connecting to through the relay
+  origin : (String) the requesting origin
 }
 ```
 
