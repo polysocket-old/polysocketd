@@ -1,6 +1,5 @@
 package main
 
-// socket contains the live websocket and functions to write to it and emit channel events out of the socket
 import (
 	"code.google.com/p/go-uuid/uuid"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 func main() {
@@ -16,34 +16,59 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(target.Host)
 	header := http.Header{}
-	conn, err := net.Dial("tcp", target.Host)
-	if err != nil {
-		log.Fatal(err)
+	config := socketConfig{
+		target:  target,
+		header:  header,
+		timeout: time.Second * 5,
 	}
-	ws, _, err := websocket.NewClient(conn, target, header, 512, 512)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = ws.WriteMessage(websocket.TextMessage, []byte("test"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	messageType, message, err := ws.ReadMessage()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("message type: %s\n", messageType)
-	fmt.Println(string(message[:]))
+	s, _ := NewSocket(config)
+	go func() {
+		s.WriteMessage <- "lulz"
+	}()
+	<-s.ReadMessage
+
 }
 
 type socket struct {
-	id uuid.UUID
-	ws *websocket.Conn
+	id           string
+	ws           *websocket.Conn
+	ReadMessage  chan string
+	WriteMessage chan string
 }
 
-func NewSocket() {
+type socketConfig struct {
+	header  http.Header
+	target  *url.URL
+	timeout time.Duration
+}
+
+func NewSocket(config socketConfig) (*socket, error) {
+	conn, err := net.Dial("tcp", config.target.Host)
+	if err != nil {
+		return nil, err
+	}
+	ws, _, err := websocket.NewClient(conn, config.target, config.header, 512, 512)
+	if err != nil {
+		return nil, err
+	}
+	s := &socket{uuid.New(), ws, make(chan string), make(chan string)}
+	go func() {
+		for {
+			message := <-s.WriteMessage
+			ws.WriteMessage(websocket.TextMessage, []byte(message))
+		}
+	}()
+	go func() {
+		for {
+			messageType, message, err := ws.ReadMessage()
+			if err == nil {
+				fmt.Printf("%s\n%s", messageType, message)
+				s.ReadMessage <- string(message[:])
+			}
+		}
+	}()
+	return s, nil
 }
 
 // only string messages are considered right now
