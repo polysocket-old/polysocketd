@@ -3,20 +3,20 @@ package main
 
 import (
   "fmt"
-  "github.com/bmizerany/pat"
+  "github.com/drone/routes"
   . "net/http"
 )
 
 func main() {
-  handler := pat.New()
+  handler := routes.New()
 
-  handler.Get("/", HandlerFunc(index))
+  handler.Get("/", index)
 
-  handler.Post("/polysocket/create", HandlerFunc(createSocket))
+  handler.Post("/polysocket/create", createSocket)
 
-  handler.Post("/polysocket/send", HandlerFunc(sendMessage))
+  handler.Post("/polysocket/send", sendMessage)
 
-  handler.Get("/polysocket/:method", HandlerFunc(listenForMessages))
+  handler.Get("/polysocket/:method(xhr|jsonp)", listenForMessages)
 
   Handle("/", handler)
 
