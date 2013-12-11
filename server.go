@@ -7,10 +7,21 @@ import (
   . "net/http"
 )
 
-func main() {
+type PolysocketServer struct {
+  port        string
+  isListening bool
+}
+
+func (s PolysocketServer) CreateServer(port string) PolysocketServer {
+  if s.isListening {
+    return s
+  }
+
   handler := mux.NewRouter()
 
   handler.HandleFunc("/", index).Methods("GET")
+
+  handler.HandleFunc("/polysocket/polysocket.js", sendClientLibrary).Methods("GET")
 
   handler.HandleFunc("/polysocket/create", createSocket).Methods("POST")
 
@@ -20,11 +31,19 @@ func main() {
 
   Handle("/", handler)
 
-  ListenAndServe(":8000", nil)
+  ListenAndServe(s.port, nil)
+
+  s.isListening = true
+
+  return s
 }
 
 func index(w ResponseWriter, r *Request) {
   fmt.Fprintf(w, "We could put statistics here. That would be neat")
+}
+
+func sendClientLibrary(w ResponseWriter, r *Request) {
+  fmt.Fprintf(w, "One day I'll give you a javascript file for your browser.")
 }
 
 func createSocket(w ResponseWriter, r *Request) {

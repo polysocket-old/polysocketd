@@ -1,4 +1,4 @@
-package polysocket
+package main
 
 import (
   "code.google.com/p/go-uuid/uuid"
