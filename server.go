@@ -3,20 +3,20 @@ package main
 
 import (
   "fmt"
-  "github.com/drone/routes"
+  "github.com/gorilla/mux"
   . "net/http"
 )
 
 func main() {
-  handler := routes.New()
+  handler := mux.NewRouter()
 
-  handler.Get("/", index)
+  handler.HandleFunc("/", index).Methods("GET")
 
-  handler.Post("/polysocket/create", createSocket)
+  handler.HandleFunc("/polysocket/create", createSocket).Methods("POST")
 
-  handler.Post("/polysocket/send", sendMessage)
+  handler.HandleFunc("/polysocket/send", sendMessage).Methods("POST")
 
-  handler.Get("/polysocket/:method(xhr|jsonp)", listenForMessages)
+  handler.HandleFunc("/polysocket/{method:(xhr|jsonp)}", listenForMessages).Methods("GET")
 
   Handle("/", handler)
 
@@ -36,7 +36,9 @@ func sendMessage(w ResponseWriter, r *Request) {
 }
 
 func listenForMessages(w ResponseWriter, r *Request) {
-  method := r.URL.Query().Get(":method")
+  method := mux.Vars(r)["method"]
+
+  fmt.Println(mux.Vars(r))
 
   fmt.Fprintf(w, "Gonna listen for messages using: %s", method)
 }
