@@ -7,16 +7,9 @@ import (
   . "net/http"
 )
 
-type PolysocketServer struct {
-  port        string
-  isListening bool
-}
+type PolySocketServer struct{}
 
-func (s PolysocketServer) CreateServer(port string) PolysocketServer {
-  if s.isListening {
-    return s
-  }
-
+func (s PolySocketServer) CreateServer(port string) PolySocketServer {
   handler := mux.NewRouter()
 
   handler.HandleFunc("/", index).Methods("GET")
@@ -31,9 +24,7 @@ func (s PolysocketServer) CreateServer(port string) PolysocketServer {
 
   Handle("/", handler)
 
-  ListenAndServe(s.port, nil)
-
-  s.isListening = true
+  ListenAndServe(port, nil)
 
   return s
 }
@@ -47,17 +38,47 @@ func sendClientLibrary(w ResponseWriter, r *Request) {
 }
 
 func createSocket(w ResponseWriter, r *Request) {
+  params := []string{"target", "origin"}
+
+  if !validateQueryString(w, r, params) {
+    return
+  }
+
   fmt.Fprintf(w, "Don't mind me, just creatin a socket. Isn't that nice?")
 }
 
 func sendMessage(w ResponseWriter, r *Request) {
+  params := []string{"socket", "events"}
+
+  if !validateQueryString(w, r, params) {
+    return
+  }
+
   fmt.Fprintf(w, "I'm gonna send that message for you")
 }
 
 func listenForMessages(w ResponseWriter, r *Request) {
   method := mux.Vars(r)["method"]
 
-  fmt.Println(mux.Vars(r))
-
   fmt.Fprintf(w, "Gonna listen for messages using: %s", method)
+}
+
+func validateQueryString(w ResponseWriter, r *Request, params []string) bool {
+  queryParams := r.URL.Query()
+
+  for _, param := range params {
+
+    if queryParams[param] == nil {
+      errString := "Missing one or more parameters: "
+
+      for _, param := range params {
+        errString += (param + " ")
+      }
+
+      Error(w, errString, 400)
+      return false
+    }
+
+  }
+  return true
 }

@@ -11,7 +11,7 @@ import (
   "time"
 )
 
-func main() {
+func doASocket() {
   target, err := url.Parse("ws://echo.websocket.org:80")
   if err != nil {
     log.Fatal(err)
