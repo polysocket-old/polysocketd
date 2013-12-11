@@ -7,9 +7,7 @@ import (
   . "net/http"
 )
 
-type PolySocketServer struct{}
-
-func (s PolySocketServer) CreateServer(port string) PolySocketServer {
+func CreateServer(port string) {
   handler := mux.NewRouter()
 
   handler.HandleFunc("/", index).Methods("GET")
@@ -26,7 +24,6 @@ func (s PolySocketServer) CreateServer(port string) PolySocketServer {
 
   ListenAndServe(port, nil)
 
-  return s
 }
 
 func index(w ResponseWriter, r *Request) {

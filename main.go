@@ -11,6 +11,5 @@ func main() {
 
   flag.Parse()
 
-  s := PolySocketServer{}
-  s.CreateServer(":" + strconv.Itoa(*port))
+  CreateServer(":" + strconv.Itoa(*port))
 }
