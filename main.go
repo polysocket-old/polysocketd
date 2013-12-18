@@ -3,5 +3,5 @@ package main
 import "github.com/polysocket/polysocketd/polysocket"
 
 func main() {
-	polysocket.Printz()
+	_ = polysocket.NewServer(8080)
 }
