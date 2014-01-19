@@ -1,40 +1,56 @@
-# polysocket-relay
+# polysocket
 
-I transform xhr-streaming and jsonp-polling into beautiful raw websocket connections.
+just use websockets!
+
+most browsers support websockets, and the ones that don't polysocket will upgrade them! so, STAP using non-standard protocols for implementing realtime! let's start building libraries and utilities on top of the standard for realtime: websockets.
 
 ## api
 
-### `POST /polysocket/create`
+### `JSONP router.polysocket.com/polysocket/create`
 
-This creates an open socket on the polysocket server for you to talk through. If the response is not 200, then there was an issue with the server, with networking, with load, or with you not giving enough parameters.
+jsonp since we're aiming for supporting all browsers. old ones only have jsonp as an option (since it's a cross-origin request), and new ones may use jsonp.
 
-If the response is 200 but not ok, then we tried to establish a websocket connection for you to your target server, but that server had a websocket error. This should be treated like an error in creating a `new WebSocket` so a server that rejects or errors the connection.
+```
+// pseudocode
 
-The response gives you a `socket` which is your session number for continuing to speak and receive on this socket.
+// validate request parameters
+ensure target is websocket url
+ensure origin is valid with key
+ensure caller is present
 
-The response also gives you a `relay` which is a hostname that you should continue talking to. This lets one server handle your rest calls and maintain state (e.g. 24.relay.polysocket.io).
+// validate authentication
+token authorizes target websocket url
+within connection limit for token
+
+// which polysocket server should handle this client?
+get polysocketd fqdn that is most available
+
+// establish socket on that remote server
+socket, err = polysocket.establish(target) // redis message passing
+```
 
 **params**
 
 ```javascript
 {
-  target : (String) valid WebSocket URL, who you're connecting to through the relay
-  origin : (String) the requesting origin
+  callback : (string) jsonp callback (also serves as cache-buster)
+  from     : (string) e.g. 'polysocketjs-v0.0.1'
+  target   : (string : valid websocket uri)
+  token    : (string) auth token
 }
 ```
 
 **response**
 
-`400` bad request means we couldn't attemp to fulfil the request because you didn't provide necessary parameters
-
-`200` means server has handled your request without issue, but your response may still be an error
-
 ```javascript
 {
-  ok     : (Boolean) true when no error
-  error  : (String, optional) present when not ok
-  socket : (String) your socket id
-  relay  : (String) hostname of the relay you should talk to
+  ok          : true
+  polysocketd : '{i}.tom.polysocketd.polysocket.com'
+  socket      : (string)
+}
+{
+  error : (string)
+  ok    : false
 }
 ```
 
