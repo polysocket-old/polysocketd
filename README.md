@@ -6,7 +6,7 @@ most browsers support websockets, and the ones that don't polysocket will upgrad
 
 ## api
 
-### `JSONP router.polysocket.com/polysocket/create`
+### `JSONP router.polysocket.com/create`
 
 jsonp since we're aiming for supporting all browsers. old ones only have jsonp as an option (since it's a cross-origin request), and new ones may use jsonp.
 
@@ -33,10 +33,10 @@ socket, err = polysocket.establish(target) // redis message passing
 
 ```javascript
 {
-  callback : (string) jsonp callback (also serves as cache-buster)
-  from     : (string) e.g. 'polysocketjs-v0.0.1'
-  target   : (string : valid websocket uri)
-  token    : (string) auth token
+  cb     : (string) jsonp callback (also serves as cache-buster)
+  from   : (string) e.g. 'polysocketjs-v0.0.1'
+  target : (string : valid websocket uri)
+  token  : (string) auth token
 }
 ```
 
@@ -45,8 +45,8 @@ socket, err = polysocket.establish(target) // redis message passing
 ```javascript
 {
   ok          : true
-  polysocketd : '{i}.tom.polysocketd.polysocket.com'
-  socket      : (string)
+  polysocketd : '{uniq}.tom.polysocket.com'
+  socket      : (string) this is your socket and your session id for communication
 }
 {
   error : (string)
@@ -54,25 +54,18 @@ socket, err = polysocket.establish(target) // redis message passing
 }
 ```
 
-### `POST ://#{relay}/polysocket/send`
+### `JSONP {uniq}.tom.polysocket.com/send/#{socket}`
+### `POST {uniq}.tom.polysocket.com/send/#{socket}`
 
-This pushes data into you established socket. This is a call independent of your jsonp long polling and xhr-streaming. This is your way to send data, the other calls are how you receive data. Combined to make full-duplex!
+this is how you write data to your socket.
 
 **params**
 
 ```javascript
 {
-  socket : (String) your established socket id
-  events : [
-    {
-      type : 'string' // string type of message send
-      data : '1234'
-    },
-    {
-      type : 'binary'
-      data : 'ABCA' // base64 binary
-    }
-  ]
+  cb : (string) only for jsonp version
+  d  : (string) base64 string when t = 'b', or utf8 string
+  t  : (string : ['b','t']) binary, or text // TODO handle continuation for when payload longer than GET URL capacity
 }
 ```
 
@@ -82,9 +75,7 @@ This pushes data into you established socket. This is a call independent of your
 
 `403` unauthorized means your socket isn't valid
 
-`201` means we have accepted your data and pushed it along your socket
-
-There is no body to the response. Just a 201 code. Once you receive this code, you are free to POST again. You shouldn't POST multiple times before receiving a response to ensure that order is maintained.
+`201` means we have accepted your data and pushed it along your socket, feel free to send more now
 
 ### `GET ://#{relay}/polysocket/jsonp?socket=#{socket}&timeout=#{timeout_ms}&callback=#{callback_fn}`
 
