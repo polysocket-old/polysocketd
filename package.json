@@ -1,0 +1,23 @@
+{
+  "name": "polysocket",
+  "version": "0.0.0",
+  "description": "just use websockets",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/polysocket/polysocketd"
+  },
+  "keywords": [
+    "websocket",
+    "polyfill"
+  ],
+  "author": "Ian Hansen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/polysocket/polysocketd/issues"
+  },
+  "homepage": "https://github.com/polysocket/polysocketd"
+}
