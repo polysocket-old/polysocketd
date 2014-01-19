@@ -54,8 +54,9 @@ socket, err = polysocket.establish(target) // redis message passing
 }
 ```
 
-### `JSONP {uniq}.tom.polysocket.com/send/#{socket}`
-### `POST {uniq}.tom.polysocket.com/send/#{socket}`
+### `send`  
+### `JSONP {uniq}.tom.polysocket.com/s/#{socket}`  
+### `POST {uniq}.tom.polysocket.com/s/#{socket}`  
 
 this is how you write data to your socket.
 
@@ -77,11 +78,18 @@ this is how you write data to your socket.
 
 `201` means we have accepted your data and pushed it along your socket, feel free to send more now
 
-### `GET ://#{relay}/polysocket/jsonp?socket=#{socket}&timeout=#{timeout_ms}&callback=#{callback_fn}`
+### `JSONP {uniq}.tom.polysocket.com/j/#{socket}`  
 
-This starts a jsonp long-polling call for receiving data over your socket. This will timeout and return with no data after timeout elapses and no data was sent. This gives the browser control over the timeout. It should be set to a time less than the browser deeming the connection as "timed out" (less than 30 seconds).
+this starts a jsonp long-polling call. this is how you receive data out of your socket.
 
-After you receive this response, you are expected to make a new call so you can get the next bit of data coming your way.
+**params**
+
+```javascript
+{
+  cb  : (string)
+  ttl : (integer) time before request expires and server should return with no data (in milliseconds)
+}
+```
 
 **response**
 
@@ -93,21 +101,24 @@ After you receive this response, you are expected to make a new call so you can 
 
 ```javascript
 {
-  ok     : (Boolean) true when no error
-  error  : (String, optional) present when ok is false
-  events : [ (array, zero or more in-order events)
+  ok       : true,
+  messages : [
     {
-      type : 'heartbeat' (just the server telling you you're still alive, happens after a timeout)
-    },
+      type: 'heartbeat' // heartbeat
+    }
     {
-      type : 'string' (you have a string message to process)
-      data : '1234'
-    },
+      type: 'text'
+      data: (string)
+    }
     {
-      type : 'binary' (you have a binary message to process - unsupported for now)
-      data : 'ABC'
+      type: 'binary'
+      data: (base64 string)
     }
   ]
+}
+{
+  error : (string)
+  ok    : false
 }
 ```
 
