@@ -1,62 +1,72 @@
-# polysocket-relay
+# polysocket
 
-I transform xhr-streaming and jsonp-polling into beautiful raw websocket connections.
+just use websockets!
+
+most browsers support websockets, and the ones that don't polysocket will upgrade them! so, STAP using non-standard protocols for implementing realtime! let's start building libraries and utilities on top of the standard for realtime: websockets.
 
 ## api
 
-### `POST /polysocket/create`
+### `JSONP router.polysocket.com/create`
 
-This creates an open socket on the polysocket server for you to talk through. If the response is not 200, then there was an issue with the server, with networking, with load, or with you not giving enough parameters.
+jsonp since we're aiming for supporting all browsers. old ones only have jsonp as an option (since it's a cross-origin request), and new ones may use jsonp.
 
-If the response is 200 but not ok, then we tried to establish a websocket connection for you to your target server, but that server had a websocket error. This should be treated like an error in creating a `new WebSocket` so a server that rejects or errors the connection.
+```
+// pseudocode
 
-The response gives you a `socket` which is your session number for continuing to speak and receive on this socket.
+// validate request parameters
+ensure target is websocket url
+ensure origin is valid with key
+ensure caller is present
 
-The response also gives you a `relay` which is a hostname that you should continue talking to. This lets one server handle your rest calls and maintain state (e.g. 24.relay.polysocket.io).
+// validate authentication
+token authorizes target websocket url
+within connection limit for token
+
+// which polysocket server should handle this client?
+get polysocketd fqdn that is most available
+
+// establish socket on that remote server
+socket, err = polysocket.establish(target) // redis message passing
+```
 
 **params**
 
 ```javascript
 {
-  target : (String) valid WebSocket URL, who you're connecting to through the relay
-  origin : (String) the requesting origin
+  cb     : (string) jsonp callback (also serves as cache-buster)
+  from   : (string) e.g. 'polysocketjs-v0.0.1'
+  target : (string : valid websocket uri)
+  token  : (string) auth token
 }
 ```
 
 **response**
 
-`400` bad request means we couldn't attemp to fulfil the request because you didn't provide necessary parameters
-
-`200` means server has handled your request without issue, but your response may still be an error
-
 ```javascript
 {
-  ok     : (Boolean) true when no error
-  error  : (String, optional) present when not ok
-  socket : (String) your socket id
-  relay  : (String) hostname of the relay you should talk to
+  ok          : true
+  polysocketd : '{uniq}.tom.polysocket.com'
+  socket      : (string) this is your socket and your session id for communication
+}
+{
+  error : (string)
+  ok    : false
 }
 ```
 
-### `POST ://#{relay}/polysocket/send`
+### `send`  
+### `JSONP {uniq}.tom.polysocket.com/s/#{socket}`  
+### `POST {uniq}.tom.polysocket.com/s/#{socket}`  
 
-This pushes data into you established socket. This is a call independent of your jsonp long polling and xhr-streaming. This is your way to send data, the other calls are how you receive data. Combined to make full-duplex!
+this is how you write data to your socket.
 
 **params**
 
 ```javascript
 {
-  socket : (String) your established socket id
-  events : [
-    {
-      type : 'string' // string type of message send
-      data : '1234'
-    },
-    {
-      type : 'binary'
-      data : 'ABCA' // base64 binary
-    }
-  ]
+  cb : (string) only for jsonp version
+  d  : (string) base64 string when t = 'b', or utf8 string
+  t  : (string : ['b','t']) binary, or text // TODO handle continuation for when payload longer than GET URL capacity
 }
 ```
 
@@ -66,15 +76,20 @@ This pushes data into you established socket. This is a call independent of your
 
 `403` unauthorized means your socket isn't valid
 
-`201` means we have accepted your data and pushed it along your socket
+`201` means we have accepted your data and pushed it along your socket, feel free to send more now
 
-There is no body to the response. Just a 201 code. Once you receive this code, you are free to POST again. You shouldn't POST multiple times before receiving a response to ensure that order is maintained.
+### `JSONP {uniq}.tom.polysocket.com/j/#{socket}`  
 
-### `GET ://#{relay}/polysocket/jsonp?socket=#{socket}&timeout=#{timeout_ms}&callback=#{callback_fn}`
+this starts a jsonp long-polling call. this is how you receive data out of your socket.
 
-This starts a jsonp long-polling call for receiving data over your socket. This will timeout and return with no data after timeout elapses and no data was sent. This gives the browser control over the timeout. It should be set to a time less than the browser deeming the connection as "timed out" (less than 30 seconds).
+**params**
 
-After you receive this response, you are expected to make a new call so you can get the next bit of data coming your way.
+```javascript
+{
+  cb  : (string)
+  ttl : (integer) time before request expires and server should return with no data (in milliseconds)
+}
+```
 
 **response**
 
@@ -86,29 +101,36 @@ After you receive this response, you are expected to make a new call so you can 
 
 ```javascript
 {
-  ok     : (Boolean) true when no error
-  error  : (String, optional) present when ok is false
-  events : [ (array, zero or more in-order events)
+  ok       : true,
+  messages : [
     {
-      type : 'heartbeat' (just the server telling you you're still alive, happens after a timeout)
-    },
+      type: 'heartbeat' // heartbeat
+    }
     {
-      type : 'string' (you have a string message to process)
-      data : '1234'
-    },
+      type: 'text'
+      data: (string)
+    }
     {
-      type : 'binary' (you have a binary message to process - unsupported for now)
-      data : 'ABC'
+      type: 'binary'
+      data: (base64 string)
     }
   ]
 }
+{
+  error : (string)
+  ok    : false
+}
 ```
 
-## DNS
+## dns
 
-Each relay should have a valid FQDN. There should also be a round-robin (or other distribution method) endpoint which will route requests to an arbitrary relay server. Only the `/polysocket/create` method should hit the round-robin endpoint. All other requests should target a specific FQDN of a relay server.
+each polysocketd server should have a valid fqdn, e.g. tom.polysocket.com. additionally, each fqdn should handle all subdomains, e.g. 1234.tom.polysocket.com.
 
-## LICENSE
+this allows the polysocket relay servers to tell a client to connect to a specific polysocketd server (the one that has opened a websocket and ready to send/receive). this also allows the browser to open a second polysocket connection to the same server without holding too many browser connections to the same domain (connecting once to 1234.tom.polysocket.com and once to 4321.tom.polysocket.com).
+
+router servers can be round-robined and made highly available. they are only used in negotiating a new socket connection and doing authentication, e.g. router.polysocket.com should dns rr to two unique addresses for availability.
+
+## license
 
 MIT
 
