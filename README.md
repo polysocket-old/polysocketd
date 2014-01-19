@@ -122,11 +122,15 @@ this starts a jsonp long-polling call. this is how you receive data out of your 
 }
 ```
 
-## DNS
+## dns
 
-Each relay should have a valid FQDN. There should also be a round-robin (or other distribution method) endpoint which will route requests to an arbitrary relay server. Only the `/polysocket/create` method should hit the round-robin endpoint. All other requests should target a specific FQDN of a relay server.
+each polysocketd server should have a valid fqdn, e.g. tom.polysocket.com. additionally, each fqdn should handle all subdomains, e.g. 1234.tom.polysocket.com.
 
-## LICENSE
+this allows the polysocket relay servers to tell a client to connect to a specific polysocketd server (the one that has opened a websocket and ready to send/receive). this also allows the browser to open a second polysocket connection to the same server without holding too many browser connections to the same domain (connecting once to 1234.tom.polysocket.com and once to 4321.tom.polysocket.com).
+
+router servers can be round-robined and made highly available. they are only used in negotiating a new socket connection and doing authentication, e.g. router.polysocket.com should dns rr to two unique addresses for availability.
+
+## license
 
 MIT
 
