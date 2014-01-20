@@ -44,9 +44,9 @@ socket, err = polysocket.establish(target) // redis message passing
 
 ```javascript
 {
-  ok          : true
-  polysocketd : '{uniq}.tom.polysocket.com'
-  socket      : (string) this is your socket and your session id for communication
+  ok     : true
+  fqdn   : '{uniq}.tom.polysocket.com'
+  socket : (string) this is your socket and your session id for communication
 }
 {
   error : (string)
